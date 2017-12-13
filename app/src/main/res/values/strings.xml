@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">ContactApp</string>
+    <string name="name">Name:</string>
+    <string name="avatar">Avatar</string>
+    <string name="name_hint">Enter name</string>
+    <string name="email">Email:</string>
+    <string name="enter_email">Enter email</string>
+    <string name="phone">Phone:</string>
+    <string name="save">Save</string>
+    <string name="enter_phone_number">Enter phone number</string>
+</resources>

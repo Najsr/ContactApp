@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="phone_types">
+        <item>FAX</item>
+        <item>PERSONAL</item>
+        <item>WORK</item>
+    </string-array>
+</resources>
