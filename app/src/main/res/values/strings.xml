@@ -9,4 +9,6 @@
     <string name="save">Save</string>
     <string name="enter_phone_number">Enter phone number</string>
     <string name="copy">Delete</string>
+    <string name="textview">TextView</string>
+    <string name="callicon">callIcon</string>
 </resources>

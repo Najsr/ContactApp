@@ -5,10 +5,12 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -25,12 +27,15 @@ import com.example.david.contactapp.ContactAdapter;
 import com.example.david.contactapp.PermissionsHelper;
 import com.example.david.contactapp.R;
 import com.example.david.contactapp.model.Contact;
+import com.melnykov.fab.FloatingActionButton;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -43,6 +48,9 @@ public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.contactList)
     ListView contactList;
+
+    @BindView(R.id.floatingActionButton)
+    FloatingActionButton floatingActionButton;
 
     private String numberToCall = "";
 
@@ -57,6 +65,10 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList checkedItems = new ArrayList<>(); // for holding list item ids
 
     private Realm realm;
+
+    private boolean deleting = false;
+
+    private Map<Contact, Integer> selectedContacts = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,28 +95,10 @@ public class MainActivity extends AppCompatActivity {
         contactList.setAdapter(contactAdapter);
     }
 
-    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-            Intent intent = new Intent(Intent.ACTION_CALL);
-            intent.setData(Uri.parse("tel:" + numberToCall));
-            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
-            }
-            getApplicationContext().startActivity(intent);
-            Toast.makeText(getApplicationContext(), "calling" + numberToCall, Toast.LENGTH_SHORT).show();
-        }
-    };
 
     @OnItemClick(R.id.contactList)
     public void itemClicked(AdapterView<?> arg0, View arg1, int position, long arg3) {
+        clearSelection();
         Contact contact = (Contact) arg0.getItemAtPosition(position);
         Intent intent = new Intent(this, ContactActivity.class);
         intent.putExtra(EXTRA_MESSAGE, contact.getId());
@@ -125,75 +119,39 @@ public class MainActivity extends AppCompatActivity {
     @OnItemLongClick(R.id.contactList)
     public boolean itemLongClicked(AdapterView<?> arg0, View arg1, int position, long arg3) {
         Contact contact = (Contact) arg0.getItemAtPosition(position);
-        /* TO DO
-        contactList.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-        contactList.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
-            @Override
-            public void onItemCheckedStateChanged(ActionMode actionMode, int position, long id, boolean checked) {
-                int checkedCount = contactList.getCheckedItemCount();
-
-                actionMode.setTitle(checkedCount + " items selected");
-                if(checked)
-                    checkedItems.add(id);
-                else
-                    checkedItems.remove(id);
-
-            }
-
-            @Override
-            public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
-                MenuInflater inflater = actionMode.getMenuInflater();
-                inflater.inflate(R.menu.delete_menu_option, menu);
-                return true;
-            }
-
-            @Override
-            public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
-                return false;
-            }
-
-            @Override
-            public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
-                final int deleteSize = checkedItems.size();
-                int itemId = menuItem.getItemId();
-                if(itemId == R.id.delete){
-                    SparseBooleanArray selected = contactAdapter.getSelectedIds();
-                    // Captures all selected ids with a loop
-                    for (int i = (selected.size() - 1); i >= 0; i--) {
-                        if (selected.valueAt(i)) {
-                            Contact selectedListItem = contactAdapter.getItem(selected.keyAt(i));
-                            // Remove selected items using ids
-                            contactAdapter.remove(selectedListItem);
-                        }
-                    }
-                    actionMode.finish();
-                    return true;
-                } else
-                    return false;
-
-                return false;
-            }
-
-            @Override
-            public void onDestroyActionMode(ActionMode actionMode) {
-            }
-        });
-        /*contactAdapter.remove(contact);
-        Toast.makeText(getApplicationContext(), contact.getName() + " long clicked (id: " + contact.getId() + ")", Toast.LENGTH_SHORT).show();
-        contactAdapter.sort(new Comparator<Contact>() {
-            @Override
-            public int compare(Contact contact, Contact t1) {
-                return contact.getName().compareToIgnoreCase(t1.getName());
-            }
-        });
-        */
+        if(!deleting) {
+            deleting = true;
+            floatingActionButton.setImageResource(R.drawable.ic_delete_black_24dp);
+        }
+        if(!selectedContacts.containsKey(contact)) {
+            selectedContacts.put(contact, position);
+            arg0.getChildAt(position).setBackgroundColor(getResources().getColor(R.color.colorAccent));
+        }
+        else {
+            selectedContacts.remove(contact);
+            arg0.getChildAt(position).setBackgroundColor(getResources().getColor(R.color.listViewDefaultColor));
+            if(selectedContacts.size() == 0)
+                clearSelection();
+        }
         return true;
 
     }
 
+
     @OnClick(R.id.floatingActionButton)
     public void fabClicked() {
         //Toast.makeText(getApplicationContext(), "Add clicked", Toast.LENGTH_SHORT).show();
+        if(deleting) {
+            realm.beginTransaction();
+            for(Contact c: selectedContacts.keySet()) {
+                contactAdapter.remove(c);
+                c.deleteFromRealm();
+            }
+            realm.commitTransaction();
+            clearSelection();
+            return;
+        }
+        clearSelection();
         Intent intent = new Intent(this, ContactActivity.class);
         startActivityForResult(intent, RETURN_CODE);
     }
@@ -213,7 +171,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                         Contact contact = realm.where(Contact.class).equalTo("id", id).findFirst();
                         contactAdapter.add(contact);
-                        Toast.makeText(getApplicationContext(), contact.getName() + " was added (id: " + contact.getId() + ")", Toast.LENGTH_SHORT).show();
                     }
                     contactAdapter.sort(new Comparator<Contact>() {
                         @Override
@@ -225,6 +182,21 @@ public class MainActivity extends AppCompatActivity {
                 break;
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(deleting)
+            clearSelection();
+    }
+
+    private void clearSelection() {
+        deleting = false;
+        for(Integer c: selectedContacts.values()) {
+            contactList.getChildAt(c).setBackgroundColor(getResources().getColor(R.color.listViewDefaultColor));
+        }
+        selectedContacts.clear();
+        floatingActionButton.setImageResource(R.drawable.ic_add_black_24dp);
     }
 
 }
