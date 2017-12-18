@@ -34,39 +34,35 @@ public class ContactAdapter extends ArrayAdapter<Contact> {
         Picasso.with(getContext()).setLoggingEnabled(true);
     }
 
-
-
-    @BindView(R.id.imageViewAvatar)
-    ImageView image;
-
-    @BindView(R.id.textViewName)
-    TextView name;
-
-    @BindView(R.id.textViewEmail)
-    TextView email;
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View view = convertView;
 
-        if (view == null) {
-            LayoutInflater layoutInflater = LayoutInflater.from(getContext());
-            view = layoutInflater.inflate(layoutResource, null);
-            ButterKnife.bind(this, view);
-        }
-
+        ViewHolder holder;
         Contact contact = getItem(position);
 
         if (contact != null) {
-            email.setText(contact.getEmail());
-            name.setText(contact.getName());
-            if(contact.getImagePath().isEmpty())
-                Picasso.with(getContext()).load(R.mipmap.ic_launcher).into(image);
-            else
-                Picasso.with(getContext()).load(Uri.parse(contact.getImagePath())).into(image);
+            convertView = LayoutInflater.from(getContext()).inflate(layoutResource,null);
+            holder = new ViewHolder();
+            holder.nameTextView = convertView.findViewById(R.id.textViewName);
+            holder.emailTextView = convertView.findViewById(R.id.textViewEmail);
+            holder.avatarImageView = convertView.findViewById(R.id.imageViewAvatar);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder)convertView.getTag();
         }
 
-        return view;
+        holder.emailTextView.setText(contact.getEmail());
+        holder.nameTextView.setText(contact.getName());
+        if(contact.getImagePath() == null || contact.getImagePath().isEmpty())
+            Picasso.with(getContext()).load(R.mipmap.ic_launcher).into(holder.avatarImageView);
+        else
+            Picasso.with(getContext()).load(Uri.parse(contact.getImagePath())).into(holder.avatarImageView);
+        return convertView;
     }
 
+    static class ViewHolder {
+        private TextView nameTextView;
+        private TextView emailTextView;
+        private ImageView avatarImageView;
+    }
 }

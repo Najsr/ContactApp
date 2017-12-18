@@ -3,7 +3,6 @@ package com.example.david.contactapp.controller;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -14,13 +13,13 @@ import android.widget.Toast;
 import com.example.david.contactapp.PermissionsHelper;
 import com.example.david.contactapp.R;
 import com.example.david.contactapp.model.Contact;
-import com.example.david.contactapp.model.Database;
 import com.rengwuxian.materialedittext.MaterialEditText;
 import com.squareup.picasso.Picasso;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.realm.Realm;
 
 import static com.example.david.contactapp.controller.MainActivity.EXTRA_MESSAGE;
 
@@ -30,7 +29,10 @@ public class ContactActivity extends Activity {
 
     private int id = -1;
 
-    Database database;
+    private boolean imageSet = false;
+
+    private Realm realm;
+
     @BindView(R.id.editTextName)
     MaterialEditText editTextName;
 
@@ -50,10 +52,10 @@ public class ContactActivity extends Activity {
         setContentView(R.layout.activity_contact);
         ButterKnife.bind(this);
         Intent intent = getIntent();
+        realm = Realm.getDefaultInstance();
         id = intent.getIntExtra(EXTRA_MESSAGE, -1);
-        database = new Database(this);
         if(id > 0)
-            loadValues(database.getData(id));
+            loadValues(realm.where(Contact.class).equalTo("id", id).findFirst());
     }
 
     @OnClick(R.id.imageViewAvatar)
@@ -74,14 +76,44 @@ public class ContactActivity extends Activity {
             return;
         }
         Intent intent = getIntent();
-        if(database.columnExists(id)) {
-            if(imageUri.equals("")) {
-                imageUri = database.getData(id).getImagePath();
-            }
-            database.updateContact(id, name, phone, imageUri, email);
+        Contact contact = realm.where(Contact.class).equalTo("id", id).findFirst();
+        boolean exists = contact != null;
+        if(exists) {
+            realm.beginTransaction();
+            contact.setName(name);
+            contact.setEmail(email);
+            contact.setNumber(phone);
+            if(imageSet)
+                contact.setImagePath(imageUri);
+            else if (contact.getImagePath() == null)
+                contact.setImagePath("");
+
+            realm.commitTransaction();
+            //database.updateContact(id, name, phone, imageUri, email);
             intent.putExtra("updated", true);
         } else {
-            id = (int)database.insertContact(name, phone, imageUri, email);
+            realm.beginTransaction();
+
+            Integer lastId;
+            try{
+               lastId = realm.where(Contact.class).max("id").intValue();
+            } catch (NullPointerException ex) {
+                lastId = 0;
+            }
+            int nextId = lastId + 1;
+            id = nextId;
+            contact = realm.createObject(Contact.class, nextId);
+            contact.setName(name);
+            contact.setEmail(email);
+            contact.setNumber(phone);
+            if(imageSet)
+                contact.setImagePath(imageUri);
+            else if (contact.getImagePath() == null)
+                contact.setImagePath("");
+
+            realm.commitTransaction();
+            //id = (int)database.insertContact(name, phone, imageUri, email);
+
         }
         intent.putExtra("id", id);
         setResult(Activity.RESULT_OK, intent);
@@ -108,6 +140,7 @@ public class ContactActivity extends Activity {
         if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK && data != null) {
             Picasso.with(this).load(data.getData()).into(avatar);
             imageUri = data.getData().toString();
+            imageSet = true;
         }
     }
 }

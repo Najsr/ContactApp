@@ -1,10 +1,17 @@
 package com.example.david.contactapp.model;
 
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
+
 /**
  * Created by David on 07-Dec-17.
  */
 
-public class Contact {
+public class Contact extends RealmObject {
+    @PrimaryKey
     private int id;
 
     private String imagePath;
@@ -15,6 +22,7 @@ public class Contact {
 
     private String number;
 
+    /*
     public Contact(int id, String name, String email, String image, String number) {
         this.id = id;
         this.imagePath = image;
@@ -22,10 +30,28 @@ public class Contact {
         this.email = email;
         this.number = number;
     }
+    */
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setNumber(String number) {
+        this.number = number;
+    }
 
     public int getId() {
         return id;
     }
+
     public String getImagePath(){
         return imagePath;
     }
@@ -41,4 +67,5 @@ public class Contact {
     public String getNumber() {
         return number;
     }
+
 }
