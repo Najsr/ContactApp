@@ -89,9 +89,6 @@ public class MainActivity extends AppCompatActivity {
                     return contact.getName().compareToIgnoreCase(t1.getName());
                 }
             });
-        PermissionsHelper.RequestPermission(this, Manifest.permission.CALL_PHONE);
-        PermissionsHelper.RequestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        PermissionsHelper.RequestPermission(this, Manifest.permission.CAMERA);
         contactAdapter = new ContactAdapter(this, R.layout.contacts_layout, contacts);
         contactList.setAdapter(contactAdapter);
     }

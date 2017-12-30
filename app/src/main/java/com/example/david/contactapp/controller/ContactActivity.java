@@ -21,6 +21,8 @@ import com.rengwuxian.materialedittext.MaterialEditText;
 import com.squareup.picasso.Picasso;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -67,12 +69,11 @@ public class ContactActivity extends Activity {
 
     @OnClick(R.id.imageViewAvatar)
     public void imageClicked() {
-        PermissionsHelper.RequestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        PermissionsHelper.RequestPermission(this, Manifest.permission.CAMERA);
+        List<String> permissions = new ArrayList<>();
+        permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        permissions.add(Manifest.permission.CAMERA);
+        PermissionsHelper.RequestPermissions(this, permissions);
         showPictureDialog();
-        //Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        //intent.setType("image/*");
-        //startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
     }
 
     private void showPictureDialog(){
@@ -194,6 +195,7 @@ public class ContactActivity extends Activity {
         if (requestCode == GALLERY) {
             if (data != null) {
                 Uri contentURI = data.getData();
+                Picasso.with(this).load(contentURI).into(avatar);
                 imageUri = contentURI.toString();
                 imageSet = true;
             }

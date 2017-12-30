@@ -6,31 +6,20 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.example.david.contactapp.R;
 import com.example.david.contactapp.controller.MainActivity;
 import com.example.david.contactapp.model.Contact;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
-import butterknife.OnItemClick;
-import butterknife.OnItemLongClick;
-import butterknife.OnLongClick;
 
 public class ContactAdapter extends ArrayAdapter<Contact> {
 
@@ -60,9 +49,11 @@ public class ContactAdapter extends ArrayAdapter<Contact> {
         } else {
             holder = (ViewHolder)convertView.getTag();
         }
+
         holder.callImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                PermissionsHelper.RequestPermission((MainActivity)getContext(), Manifest.permission.CALL_PHONE);
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setTitle(contact.getName());
                 numberToCall = contact.getNumber();
