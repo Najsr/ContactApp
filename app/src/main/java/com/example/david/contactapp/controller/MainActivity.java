@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
             });
         PermissionsHelper.RequestPermission(this, Manifest.permission.CALL_PHONE);
         PermissionsHelper.RequestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+        PermissionsHelper.RequestPermission(this, Manifest.permission.CAMERA);
         contactAdapter = new ContactAdapter(this, R.layout.contacts_layout, contacts);
         contactList.setAdapter(contactAdapter);
     }
@@ -98,12 +99,23 @@ public class MainActivity extends AppCompatActivity {
 
     @OnItemClick(R.id.contactList)
     public void itemClicked(AdapterView<?> arg0, View arg1, int position, long arg3) {
-        clearSelection();
         Contact contact = (Contact) arg0.getItemAtPosition(position);
-        Intent intent = new Intent(this, ContactActivity.class);
-        intent.putExtra(EXTRA_MESSAGE, contact.getId());
-        startActivityForResult(intent, RETURN_CODE);
-
+        if(deleting) {
+            if(!selectedContacts.containsKey(contact)) {
+                selectedContacts.put(contact, position);
+                arg0.getChildAt(position).setBackgroundColor(getResources().getColor(R.color.colorAccent));
+            }
+            else {
+                selectedContacts.remove(contact);
+                arg0.getChildAt(position).setBackgroundColor(getResources().getColor(R.color.listViewDefaultColor));
+                if(selectedContacts.size() == 0)
+                    clearSelection();
+            }
+        } else {
+            Intent intent = new Intent(this, ContactActivity.class);
+            intent.putExtra(EXTRA_MESSAGE, contact.getId());
+            startActivityForResult(intent, RETURN_CODE);
+        }
         /*
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(contact.getName());

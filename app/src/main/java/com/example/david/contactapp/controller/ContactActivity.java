@@ -2,10 +2,14 @@ package com.example.david.contactapp.controller;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v7.app.AlertDialog;
 import android.util.Patterns;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -16,6 +20,8 @@ import com.example.david.contactapp.model.Contact;
 import com.rengwuxian.materialedittext.MaterialEditText;
 import com.squareup.picasso.Picasso;
 
+import java.io.ByteArrayOutputStream;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -25,7 +31,8 @@ import static com.example.david.contactapp.controller.MainActivity.EXTRA_MESSAGE
 
 public class ContactActivity extends Activity {
 
-    private static final int PICK_IMAGE = 25;
+    private static final int GALLERY = 999;
+    private static final int CAMERA = 1000;
 
     private int id = -1;
 
@@ -61,9 +68,54 @@ public class ContactActivity extends Activity {
     @OnClick(R.id.imageViewAvatar)
     public void imageClicked() {
         PermissionsHelper.RequestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        intent.setType("image/*");
-        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
+        PermissionsHelper.RequestPermission(this, Manifest.permission.CAMERA);
+        showPictureDialog();
+        //Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        //intent.setType("image/*");
+        //startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
+    }
+
+    private void showPictureDialog(){
+        AlertDialog.Builder pictureDialog = new AlertDialog.Builder(this);
+        pictureDialog.setTitle("Select Action");
+        String[] pictureDialogItems = {
+                "Select photo from gallery",
+                "Capture photo from camera" };
+        pictureDialog.setItems(pictureDialogItems,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case 0:
+                                choosePhotoFromGallery();
+                                break;
+                            case 1:
+                                takePhotoFromCamera();
+                                break;
+                        }
+                    }
+                });
+        pictureDialog.show();
+    }
+
+    public void choosePhotoFromGallery() {
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        try {
+            startActivityForResult(galleryIntent, GALLERY);
+        } catch (Exception ex) {
+            Toast.makeText(this, "No permission for reading external storage :(", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void takePhotoFromCamera() {
+        PermissionsHelper.RequestPermission(this, Manifest.permission.CAMERA);
+        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        try {
+            startActivityForResult(intent, CAMERA);
+        } catch (Exception ex) {
+            Toast.makeText(this, "No camera permission :(", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @OnClick(R.id.buttonSave)
@@ -89,7 +141,6 @@ public class ContactActivity extends Activity {
                 contact.setImagePath("");
 
             realm.commitTransaction();
-            //database.updateContact(id, name, phone, imageUri, email);
             intent.putExtra("updated", true);
         } else {
             realm.beginTransaction();
@@ -112,7 +163,6 @@ public class ContactActivity extends Activity {
                 contact.setImagePath("");
 
             realm.commitTransaction();
-            //id = (int)database.insertContact(name, phone, imageUri, email);
 
         }
         intent.putExtra("id", id);
@@ -137,10 +187,32 @@ public class ContactActivity extends Activity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-        if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK && data != null) {
-            Picasso.with(this).load(data.getData()).into(avatar);
-            imageUri = data.getData().toString();
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_CANCELED) {
+            return;
+        }
+        if (requestCode == GALLERY) {
+            if (data != null) {
+                Uri contentURI = data.getData();
+                imageUri = contentURI.toString();
+                imageSet = true;
+            }
+
+        } else if (requestCode == CAMERA) {
+            Bitmap photo = (Bitmap) data.getExtras().get("data");
+            Uri uri = getImageUri(getApplicationContext(), photo);
+            Picasso.with(this).load(uri).into(avatar);
+            imageUri = uri.toString();
             imageSet = true;
         }
+
     }
+
+    public Uri getImageUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+        return Uri.parse(path);
+    }
+
 }
