@@ -32,6 +32,11 @@ public class Contact extends RealmObject {
     }
     */
 
+    @Override
+    public String toString() {
+        return this.getName();
+    }
+
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
     }

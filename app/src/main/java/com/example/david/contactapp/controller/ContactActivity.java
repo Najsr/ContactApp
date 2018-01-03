@@ -1,16 +1,24 @@
 package com.example.david.contactapp.controller;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.util.Patterns;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -27,6 +35,10 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.OnEditorAction;
+import butterknife.OnFocusChange;
+import butterknife.OnTextChanged;
+import butterknife.OnTouch;
 import io.realm.Realm;
 
 import static com.example.david.contactapp.controller.MainActivity.EXTRA_MESSAGE;
@@ -41,6 +53,8 @@ public class ContactActivity extends Activity {
     private boolean imageSet = false;
 
     private Realm realm;
+
+    private int focusedEditTextId;
 
     @BindView(R.id.editTextName)
     MaterialEditText editTextName;
@@ -68,12 +82,32 @@ public class ContactActivity extends Activity {
     }
 
     @OnClick(R.id.imageViewAvatar)
-    public void imageClicked() {
+    public void imageClicked(View view) {
+        view.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.image_click));
         List<String> permissions = new ArrayList<>();
         permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
         permissions.add(Manifest.permission.CAMERA);
         PermissionsHelper.RequestPermissions(this, permissions);
         showPictureDialog();
+    }
+    @OnFocusChange({R.id.editTextPhone, R.id.editTextEmail})
+    public void onFocusChange(View v, boolean hasFocus) {
+        if (hasFocus)
+            focusedEditTextId = v.getId();
+    }
+
+    @OnTextChanged({R.id.editTextPhone, R.id.editTextEmail})
+    public void OnTextChanged(CharSequence text, int start, int before, int count) {
+        switch (focusedEditTextId) {
+            case R.id.editTextEmail:
+                editTextEmail.setTextColor(Patterns.EMAIL_ADDRESS.matcher(text.toString().trim()).matches() ?
+                        Color.BLACK : Color.RED);
+                break;
+            case R.id.editTextPhone:
+                editTextEmail.setTextColor(Patterns.PHONE.matcher(text.toString().trim()).matches() ?
+                        Color.BLACK : Color.RED);
+                break;
+        }
     }
 
     private void showPictureDialog(){
@@ -124,8 +158,16 @@ public class ContactActivity extends Activity {
         String name = editTextName.getText().toString().trim();
         String email = editTextEmail.getText().toString().trim();
         String phone = editTextPhone.getText().toString().trim();
+        if(name.isEmpty()) {
+            vibrateView(editTextName);
+        }
+        if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            vibrateView(editTextEmail);
+        }
+        if(!Patterns.PHONE.matcher(phone).matches()) {
+            vibrateView(editTextPhone);
+        }
         if(name.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches() || !Patterns.PHONE.matcher(phone).matches()) {
-            Toast.makeText(getApplicationContext(), "Please check your input data!", Toast.LENGTH_SHORT).show();
             return;
         }
         Intent intent = getIntent();
@@ -215,6 +257,13 @@ public class ContactActivity extends Activity {
         inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
         String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
         return Uri.parse(path);
+    }
+
+    private void vibrateView(View v) {
+        ObjectAnimator
+                .ofFloat(v, "translationX", 0, 25, -25, 25, -25,15, -15, 6, -6, 0)
+                .setDuration(500)
+                .start();
     }
 
 }

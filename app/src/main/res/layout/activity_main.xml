@@ -1,35 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:fab="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/listViewDefaultColor"
     tools:context="com.example.david.contactapp.controller.MainActivity">
 
-    <ListView
-        android:id="@+id/contactList"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/listViewDefaultColor">
-
-    </ListView>
     <com.melnykov.fab.FloatingActionButton
         android:id="@+id/floatingActionButton"
+        android:src="@drawable/ic_add_black_24dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_add_black_24dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_gravity="end|bottom"
+        android:layout_marginEnd="28dp"
+        android:layout_marginBottom="28dp"
         fab:fab_colorNormal="#FF0000"
         fab:fab_colorPressed="#DF0101"
         fab:fab_colorRipple="@color/colorAccent"
         fab:fab_shadow="true"
         fab:fab_type="normal"
-
-
-
-
         />
-</FrameLayout>
+
+    <ListView
+        android:id="@+id/contactList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/toolbar"
+        android:background="@color/listViewDefaultColor">
+
+    </ListView>
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary" />
+
+    <ImageView
+        android:id="@+id/imageViewRemove"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignTop="@+id/imageViewSort"
+        android:layout_marginStart="15dp"
+        android:clickable="true"
+        android:contentDescription="@string/app_name"
+        android:visibility="invisible"
+        fab:srcCompat="@drawable/ic_keyboard_backspace_black_24dp"
+        tools:ignore="KeyboardInaccessibleWidget" />
+
+    <ImageView
+        android:id="@+id/imageViewSort"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/contactList"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="15dp"
+        android:layout_marginEnd="15dp"
+        android:clickable="true"
+        android:contentDescription="@string/app_name"
+        fab:srcCompat="@drawable/ic_sort_by_alpha_black_24dp"
+        tools:ignore="KeyboardInaccessibleWidget" />
+
+    <com.rengwuxian.materialedittext.MaterialEditText
+        android:id="@+id/editTextSearch"
+        android:layout_width="250dp"
+        android:layout_height="45dp"
+        android:layout_above="@+id/contactList"
+        android:layout_centerHorizontal="true"
+        android:hint="@string/search"
+        android:maxLength="20"
+        android:maxLines="1"
+        app:met_iconLeft="@drawable/ic_search_black_24dp"
+        app:met_iconPadding="-10dp"
+        app:met_textColor="@color/blackColor"
+        app:met_primaryColor="@color/blackColor"
+        android:singleLine="true"
+        android:visibility="invisible"/>
+
+</RelativeLayout>

@@ -3,5 +3,8 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="colorAccentDark">#FF2071</color>
     <color name="listViewDefaultColor">#D3D3D3</color>
+    <color name="redColor">#FF0000</color>
+    <color name="blackColor">#000000</color>
 </resources>
